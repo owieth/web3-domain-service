@@ -6,6 +6,9 @@ dotenv.config();
 
 const config: HardhatUserConfig = {
   solidity: "0.8.10",
+  paths: {
+    artifacts: "./frontend/artifacts"
+  },
   networks: {
     mumbai: {
       url: process.env.ALCHEMY_MUMBAI_URL,
