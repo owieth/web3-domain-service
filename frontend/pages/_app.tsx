@@ -1,3 +1,4 @@
+import { createTheme, NextUIProvider } from '@nextui-org/react';
 import {
   darkTheme,
   getDefaultWallets,
@@ -8,11 +9,9 @@ import type { AppProps } from 'next/app';
 import {
   chain, configureChains, createClient, WagmiConfig
 } from "wagmi";
-import { publicProvider } from 'wagmi/providers/public';
 import { alchemyProvider } from 'wagmi/providers/alchemy';
-import { createTheme, NextUIProvider } from '@nextui-org/react';
+import { publicProvider } from 'wagmi/providers/public';
 import "../styles/globals.css";
-import next from "next";
 
 const { chains, provider } = configureChains(
   [
