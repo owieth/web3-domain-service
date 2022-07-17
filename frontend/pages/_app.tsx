@@ -10,17 +10,13 @@ import {
 } from "wagmi";
 import { publicProvider } from 'wagmi/providers/public';
 import { alchemyProvider } from 'wagmi/providers/alchemy';
+import { createTheme, NextUIProvider } from '@nextui-org/react';
 import "../styles/globals.css";
+import next from "next";
 
 const { chains, provider } = configureChains(
   [
-    chain.mainnet,
-    chain.polygon,
-    chain.goerli,
-    chain.rinkeby,
     chain.polygonMumbai,
-    chain.localhost,
-    chain.hardhat
   ],
   [
     alchemyProvider({ alchemyId: process.env.ALCHEMY_ID }),
@@ -39,16 +35,23 @@ const wagmiClient = createClient({
   provider,
 });
 
+const nextUiDarkTheme = createTheme({
+  type: 'dark'
+});
+
 function IndexPage({ Component, pageProps }: AppProps) {
   return (
-    <WagmiConfig client={wagmiClient}>
-      <RainbowKitProvider chains={chains} theme={darkTheme({
-        ...darkTheme.accentColors.orange,
-        borderRadius: 'large',
-      })} coolMode>
-        <Component {...pageProps} />
-      </RainbowKitProvider>
-    </WagmiConfig>
+    <NextUIProvider theme={nextUiDarkTheme}>
+      <WagmiConfig client={wagmiClient}>
+        <RainbowKitProvider chains={chains} theme={darkTheme({
+          ...darkTheme.accentColors.orange,
+          borderRadius: 'large',
+        })} coolMode>
+          <Component {...pageProps} />
+        </RainbowKitProvider>
+      </WagmiConfig>
+    </NextUIProvider>
+
   );
 }
 

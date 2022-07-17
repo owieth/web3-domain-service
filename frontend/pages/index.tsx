@@ -1,13 +1,14 @@
-import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { Button, Card, Container, Grid, Input, Loading, Spacer, Text } from "@nextui-org/react";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { ethers } from 'ethers';
-import type { NextPage } from 'next'
-import { useEffect, useState } from 'react'
+import type { NextPage } from 'next';
+import { useEffect, useState } from 'react';
 import { useAccount, useContractRead, useContractWrite, useWaitForTransaction } from 'wagmi';
 
 import contractAbi from '../artifacts/contracts/Domains.sol/Domains.json';
 
 const contractConfig = {
-  addressOrName: "0x912f311780F3875c72dff0B02c534297EC53900B",
+  addressOrName: "0x41B92873A081BAC4d154D0A28226fE13921910C8",
   contractInterface: contractAbi.abi,
 };
 
@@ -16,6 +17,7 @@ const Home: NextPage = () => {
 
   const [domain, setDomain] = useState('');
   const [record, setRecord] = useState('');
+  const [domains, setDomains] = useState(['o']);
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [price, setPrice] = useState('0.1');
 
@@ -26,33 +28,26 @@ const Home: NextPage = () => {
 
   const {
     data: mintData,
-    write: mint,
     isLoading: isMintLoading,
     isSuccess: isMintStarted,
-    error: mintError,
+    writeAsync: mint
   } = useContractWrite({
     ...contractConfig, functionName: 'register',
-    // overrides: { value: ethers.utils.parseEther('0.1') },
-    overrides: { customData: [domain, ethers.utils.parseEther('0.1')] },
+    overrides: { gasLimit: 1e7, value: ethers.utils.parseEther(price) },
+    args: [domain]
   });
 
   const {
-    data: recordData,
     write: mintRecord,
-    isLoading: isRecordLoading,
-    isSuccess: isRecordStarted,
-    error: recordError,
   } = useContractWrite({
     ...contractConfig, functionName: 'setRecord',
-    overrides: { customData: [domain, record] },
+    args: [domain, record]
   });
 
-  const { data: totalSupplyData } = useContractRead({
+  const { data: allDomains } = useContractRead({
     ...contractConfig,
-    functionName: 'tld',
+    functionName: 'getAllNames',
     watch: true,
-    //overrides: { value: 'mortal' }
-    //overrides: { customData: { name: 'mortal' } },
   });
 
   const { isSuccess: txSuccess, error: txError } = useWaitForTransaction({
@@ -64,82 +59,55 @@ const Home: NextPage = () => {
   const tld = '.oli';
 
   useEffect(() => {
-    if (totalSupplyData) {
-      //setTotalMinted(totalSupplyData.toNumber());
-      console.log(totalSupplyData);
-    }
-  }, [totalSupplyData]);
+    console.log(allDomains);
+    setDomains(allDomains as [])
+  }, []);
 
   const renderInputForm = () => {
     return (
-      <div className="form-container">
-        <div className="first-row">
-          <input
-            type="text"
-            value={domain}
-            placeholder='domain'
-            onChange={e => setDomain(e.target.value)}
-          />
-          <p className='tld'> {tld} </p>
-        </div>
-
-        <input
-          type="text"
-          value={record}
-          placeholder='whats ur ninja power'
-          onChange={e => setRecord(e.target.value)}
-        />
-
-        <div className="button-container">
-          <button className='cta-button mint-button' disabled={!domain} onClick={mintDomain}>
-            Mint
-          </button>
-          <button className='cta-button mint-button' disabled={false} onClick={() => { }}>
-            Set data
-          </button>
-        </div>
-
-      </div>
+      <Container style={{ maxWidth: '500px' }}>
+        <Card variant='bordered'>
+          <Card.Body>
+            <Input
+              aria-label=''
+              bordered
+              labelLeft="domain:"
+              labelRight={tld}
+              onChange={e => onDomainChange(e.target.value)}
+            />
+            <Spacer y={1} />
+            <Input
+              aria-label=''
+              bordered
+              placeholder="Attach something to your address!"
+              onChange={e => setRecord(e.target.value)}
+            />
+            <Spacer y={1} />
+            <Button onClick={() => mintDomain()} disabled={domain.length < 3} shadow color="gradient" style={{ width: '200px' }} iconRight={isMintLoading && !isMinted && <Loading color="currentColor" size="sm" />}>
+              {isMintLoading && 'Waiting for approval'}
+              {isMintStarted && 'Minting...'}
+              {!isMintLoading && !isMintStarted && 'Mint'}
+            </Button>
+          </Card.Body>
+          <Card.Footer css={{ justifyItems: "flex-start" }}>
+            <Text h4>Mint Price is {price}</Text>
+          </Card.Footer>
+        </Card>
+      </Container>
     );
   }
 
-  const mintDomain = async () => {
-    if (domain.length < 3) {
-      alert('Domain must be at least 3 characters long');
-      return;
-    }
-
+  const onDomainChange = (domain: string) => {
     // Calculate price based on length of domain (change this to match your contract)	
     // 3 chars = 0.5 MATIC, 4 chars = 0.3 MATIC, 5 or more = 0.1 MATIC
     setPrice(domain.length === 3 ? '0.5' : domain.length === 4 ? '0.3' : '0.1');
-    console.log("Minting domain", domain, "with price", price);
+    setDomain(domain);
+  }
 
-
+  const mintDomain = async () => {
     try {
-      // const provider = new ethers.providers.Web3Provider(ethereum);
-      // const signer = provider.getSigner();
-      // const contract = new ethers.Contract(CONTRACT_ADDRESS, contractAbi.abi, signer);
-
-      console.log("Going to pop wallet now to pay gas...")
-      //let tx = await contract.register(domain, { value: ethers.utils.parseEther(price) });
-      // Wait for the transaction to be mined
       mint();
-      debugger;
-
-      // Check if the transaction was successfully completed
-      if (isMinted) {
-        console.log("Domain minted! https://mumbai.polygonscan.com/tx/" + mintData?.hash);
-        // Set the record for the domain
-        //tx = await contract.setRecord(domain, record);
-        //await tx.wait();
-
-        mintRecord();
-
-        console.log("Record set! https://mumbai.polygonscan.com/tx/" + recordData?.hash);
-
-        setRecord('');
-        setDomain('');
-      }
+      mintRecord();
     }
     catch (error) {
       console.log(error);
@@ -147,22 +115,28 @@ const Home: NextPage = () => {
   }
 
   return (
-    <div className="App">
-      <div className="container">
-        <div className="header-container">
-          <header>
-            <div className="left">
-              <p className="title">🐱‍👤 Ninja Name Service</p>
-              <p className="subtitle">Your immortal API on the blockchain!</p>
-            </div>
+    <>
+      <Grid.Container gap={2} alignItems="center">
+        <Grid xs={6} alignItems="center" direction='column'>
+          <Text h1>🔌 Oli's Name Service</Text>
+          <Text h3>Your immortal API on the blockchain!</Text>
+        </Grid>
 
-            <ConnectButton />
+        <Grid xs={6} justify="flex-end">
+          <ConnectButton />
+        </Grid>
+      </Grid.Container>
 
-            {isWalletConnected && renderInputForm()}
-          </header>
-        </div>
-      </div>
-    </div>
+      {isWalletConnected && renderInputForm()}
+
+      {domains.map(domain => {
+        <Card css={{ mw: "400px" }}>
+          <Card.Body>
+            <Text>{domain}</Text>
+          </Card.Body>
+        </Card>
+      })}
+    </>
   );
 }
 
