@@ -5,7 +5,7 @@ import type { NextPage } from 'next';
 import { useEffect, useState } from 'react';
 import { useAccount, useContractRead, useContractWrite, useWaitForTransaction } from 'wagmi';
 
-import contractAbi from '../artifacts/contracts/Domains.sol/Domains.json';
+import contractAbi from './artifacts/contracts/Domains.sol/Domains.json';
 
 const contractConfig = {
   addressOrName: "0x41B92873A081BAC4d154D0A28226fE13921910C8",
