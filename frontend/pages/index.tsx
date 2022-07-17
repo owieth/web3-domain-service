@@ -118,7 +118,7 @@ const Home: NextPage = () => {
     <>
       <Grid.Container gap={2} alignItems="center">
         <Grid xs={6} alignItems="center" direction='column'>
-          <Text h1>🔌 Oli's Name Service</Text>
+          <Text h1>🔌 Oli&apos;s Name Service</Text>
           <Text h3>Your immortal API on the blockchain!</Text>
         </Grid>
 
