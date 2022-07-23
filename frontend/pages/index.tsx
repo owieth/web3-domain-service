@@ -59,7 +59,6 @@ const Home: NextPage = () => {
   const tld = '.oli';
 
   useEffect(() => {
-    console.log(allDomains);
     setDomains(allDomains as [])
   }, []);
 
